@@ -1,33 +1,64 @@
-from typing import Tuple, List, Optional
-from pathfinder.pyrvo.kd_tree import KDTree
+from typing import List, Optional, Tuple
+
 from pathfinder.pyrvo.agent import Agent, linear_program2, linear_program3
+from pathfinder.pyrvo.kd_tree import KDTree
 from pathfinder.pyrvo.obstacle import Obstacle
 
+
 class RVOSimulator:
-    def __init__(self, neighbor_dist: float,
-                 max_neighbors: int,
-                 time_horizon: float,
-                 time_horizon_obst: float,
-                 radius: float,
-                 max_speed: float):
+    def __init__(
+        self,
+        neighbor_dist: float,
+        max_neighbors: int,
+        time_horizon: float,
+        time_horizon_obst: float,
+        radius: float,
+        max_speed: float,
+    ):
         self._kd_tree = KDTree(self)
-        self._default_agent = Agent(self, -1, None, (0.0, 0.0), (0.0, 0.0),
-                                    neighbor_dist, max_neighbors, time_horizon, time_horizon_obst, radius, max_speed)
+        self._default_agent = Agent(
+            self,
+            -1,
+            None,
+            (0.0, 0.0),
+            (0.0, 0.0),
+            neighbor_dist,
+            max_neighbors,
+            time_horizon,
+            time_horizon_obst,
+            radius,
+            max_speed,
+        )
         # set default agent parameters
         # self._default_agent.set_parameters(max_neighbors, max_speed, neighbor_dist, radius, time_horizon, time_horizon_obst, (0.0, 0.0))
         self._agents: List[Agent] = []  # set agents empty array
         self._obstacles: List[Obstacle] = []  # also for obstacles
         self._force_update_agents = True
 
-    def add_agent(self, position: Tuple[float, float],
-                  radius: Optional[float] = None,
-                  velocity: Tuple[float, float] = (0.0, 0.0),
-                  neighbor_dist: Optional[float] = None,
-                  max_neighbors: Optional[int] = None,
-                  time_horizon: Optional[float] = None,
-                  time_horizon_obst: Optional[float] = None,
-                  max_speed: Optional[float] = None) -> int:
-        agent = Agent(self, len(self._agents), self._default_agent, position, velocity, neighbor_dist, max_neighbors, time_horizon, time_horizon_obst, radius, max_speed)
+    def add_agent(
+        self,
+        position: Tuple[float, float],
+        radius: Optional[float] = None,
+        velocity: Tuple[float, float] = (0.0, 0.0),
+        neighbor_dist: Optional[float] = None,
+        max_neighbors: Optional[int] = None,
+        time_horizon: Optional[float] = None,
+        time_horizon_obst: Optional[float] = None,
+        max_speed: Optional[float] = None,
+    ) -> int:
+        agent = Agent(
+            self,
+            len(self._agents),
+            self._default_agent,
+            position,
+            velocity,
+            neighbor_dist,
+            max_neighbors,
+            time_horizon,
+            time_horizon_obst,
+            radius,
+            max_speed,
+        )
         self._agents.append(agent)
         self._force_update_agents = True
         return len(self._agents) - 1
@@ -58,16 +89,22 @@ class RVOSimulator:
                     obstacle.set_next_obstacle(self._obstacles[obstacle_no])
                     obstacle.get_next_obstacle().set_prev_obstacle(obstacle)
 
-                obstacle.set_unit_dir(vertices[0 if (i == len(vertices) - 1) else i + 1], vertices[i])
+                obstacle.set_unit_dir(
+                    vertices[0 if (i == len(vertices) - 1) else i + 1], vertices[i]
+                )
                 if len(vertices) == 2:
                     obstacle.set_is_convex_value(True)
                 else:
-                    obstacle.set_is_convex(vertices[(len(vertices) - 1 if i == 0 else i - 1)], vertices[i], vertices[0 if (i == len(vertices) - 1) else i + 1])
+                    obstacle.set_is_convex(
+                        vertices[(len(vertices) - 1 if i == 0 else i - 1)],
+                        vertices[i],
+                        vertices[0 if (i == len(vertices) - 1) else i + 1],
+                    )
 
                 obstacle.set_id(len(self._obstacles))
                 self._obstacles.append(obstacle)
             return obstacle_no
-                
+
         else:
             return -1
 
@@ -91,7 +128,9 @@ class RVOSimulator:
             self._agents[i].update(delta_time, move_agents)
 
     def get_agent_agent_neighbor(self, agent_index: int, neighbor_index: int) -> int:
-        return self._agents[agent_index].get_agent_neighbors()[neighbor_index][1].get_id()
+        return (
+            self._agents[agent_index].get_agent_neighbors()[neighbor_index][1].get_id()
+        )
 
     def get_agent_max_neighbors(self, agent_index: int) -> int:
         return self._agents[agent_index].get_max_neighbors()
@@ -109,12 +148,18 @@ class RVOSimulator:
         return len(self._agents[agent_index].get_obstacle_neighbors())
 
     def get_agent_obstacle_neighbor(self, agent_index: int, neighbor_index: int):
-        return self._agents[agent_index].get_obstacle_neighbors()[neighbor_index][1].get_id()
+        return (
+            self._agents[agent_index]
+            .get_obstacle_neighbors()[neighbor_index][1]
+            .get_id()
+        )
 
     def get_agent_position(self, agent_index: int) -> Tuple[float, float]:
         return self._agents[agent_index].get_position()
 
-    def get_agent_pref_velocity(self, agent_index: int) -> Optional[Tuple[float, float]]:
+    def get_agent_pref_velocity(
+        self, agent_index: int
+    ) -> Optional[Tuple[float, float]]:
         return self._agents[agent_index].get_pref_velocity()
 
     def get_agent_radius(self, agent_index: int) -> float:
@@ -150,17 +195,29 @@ class RVOSimulator:
     def process_obstacles(self):
         self._kd_tree.build_obstacle_tree()
 
-    def query_visibility(self, start: Tuple[float, float], end: Tuple[float, float], radius: float = 0.0) -> bool:
+    def query_visibility(
+        self, start: Tuple[float, float], end: Tuple[float, float], radius: float = 0.0
+    ) -> bool:
         return self._kd_tree.query_visibility(start, end, radius)
 
-    def set_agent_defaults(self,
-                           neighbor_dist: float,
-                           max_neighbors: int,
-                           time_horizon: float,
-                           time_horizon_obst: float,
-                           radius: float,
-                           max_speed: float):
-        self._default_agent.set_parameters(max_neighbors, max_speed, neighbor_dist, radius, time_horizon, time_horizon_obst, (0.0, 0.0))
+    def set_agent_defaults(
+        self,
+        neighbor_dist: float,
+        max_neighbors: int,
+        time_horizon: float,
+        time_horizon_obst: float,
+        radius: float,
+        max_speed: float,
+    ):
+        self._default_agent.set_parameters(
+            max_neighbors,
+            max_speed,
+            neighbor_dist,
+            radius,
+            time_horizon,
+            time_horizon_obst,
+            (0.0, 0.0),
+        )
 
     def set_agent_max_neighbors(self, agent_index: int, max_neighbors: int):
         self._agents[agent_index].set_max_neighbors(max_neighbors)

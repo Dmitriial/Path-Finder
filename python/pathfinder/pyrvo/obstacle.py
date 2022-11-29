@@ -1,6 +1,8 @@
-from typing import Tuple
 import math
+from typing import Tuple
+
 from pathfinder.pyrvo.utilities import left_of
+
 
 class Obstacle:
     def __init__(self):
@@ -30,9 +32,11 @@ class Obstacle:
     def get_next_obstacle(self):
         return self._next_obstacle
 
-    def set_unit_dir(self, point_01: Tuple[float, float], point_02: Tuple[float, float]):
+    def set_unit_dir(
+        self, point_01: Tuple[float, float], point_02: Tuple[float, float]
+    ):
         v = (point_01[0] - point_02[0], point_01[1] - point_02[1])
-        l = math.sqrt(v[0]**2 + v[1]**2)
+        l = math.sqrt(v[0] ** 2 + v[1] ** 2)
         self._unit_dir = (v[0] / l, v[1] / l)
 
     def set_unit_dir_value(self, unit_dir: Tuple[float, float]):
@@ -41,7 +45,12 @@ class Obstacle:
     def get_unit_dir(self) -> Tuple[float, float]:
         return self._unit_dir
 
-    def set_is_convex(self, point_01: Tuple[float, float], point_02: Tuple[float, float], point_03: Tuple[float, float]):
+    def set_is_convex(
+        self,
+        point_01: Tuple[float, float],
+        point_02: Tuple[float, float],
+        point_03: Tuple[float, float],
+    ):
         self._is_convex = left_of(point_01, point_02, point_03) >= 0.0
 
     def set_is_convex_value(self, is_convex: bool):

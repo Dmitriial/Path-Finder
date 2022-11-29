@@ -1,10 +1,11 @@
 from typing import Optional
+
+from pathfinder.navmesh_baker.rc_calcs import get_dir_offset_x, get_dir_offset_y
 from pathfinder.navmesh_baker.rc_classes import Heightfield, Span
 from pathfinder.navmesh_baker.rc_constants import RC_NULL_AREA
-from pathfinder.navmesh_baker.rc_calcs import get_dir_offset_x, get_dir_offset_y
 
-def filter_low_hanging_walkable_obstacles(walkable_climb: int,
-                                          solid: Heightfield):
+
+def filter_low_hanging_walkable_obstacles(walkable_climb: int, solid: Heightfield):
     w: int = solid.width
     h: int = solid.height
 
@@ -14,7 +15,7 @@ def filter_low_hanging_walkable_obstacles(walkable_climb: int,
             previous_walkable: bool = False
             previous_area: int = RC_NULL_AREA
 
-            s: Optional[Span] = solid.spans[x + y*w]
+            s: Optional[Span] = solid.spans[x + y * w]
             while s is not None:
                 walkable: bool = s.area != RC_NULL_AREA
                 # If current span is not walkable, but there is walkable
@@ -29,15 +30,13 @@ def filter_low_hanging_walkable_obstacles(walkable_climb: int,
                 s = s.next
 
 
-def filter_ledge_spans(walkable_height: int,
-                       walkable_climb: int,
-                       solid: Heightfield):
+def filter_ledge_spans(walkable_height: int, walkable_climb: int, solid: Heightfield):
     w: int = solid.width
     h: int = solid.height
     MAX_HEIGHT: int = 65535
     for y in range(h):
         for x in range(w):
-            s: Optional[Span] = solid.spans[x + y*w]
+            s: Optional[Span] = solid.spans[x + y * w]
             while s is not None:
                 # Skip non walkable spans
                 if s.area == RC_NULL_AREA:
@@ -61,7 +60,7 @@ def filter_ledge_spans(walkable_height: int,
                         continue
 
                     # From minus infinity to the first span
-                    ns: Optional[Span] = solid.spans[dx + dy*w]
+                    ns: Optional[Span] = solid.spans[dx + dy * w]
                     nbot: int = -walkable_climb
                     ntop: int = ns.smin if ns is not None else MAX_HEIGHT
                     # Skip neightbour if the gap between the spans is too small
@@ -96,8 +95,7 @@ def filter_ledge_spans(walkable_height: int,
                 s = s.next
 
 
-def filter_walkable_low_height_spans(walkable_height: int,
-                                     solid: Heightfield):
+def filter_walkable_low_height_spans(walkable_height: int, solid: Heightfield):
     w: int = solid.width
     h: int = solid.height
     MAX_HEIGHT: int = 65535
@@ -106,7 +104,7 @@ def filter_walkable_low_height_spans(walkable_height: int,
     # space above them for the agent to stand there
     for y in range(h):
         for x in range(w):
-            s: Optional[Span] = solid.spans[x + y*w]
+            s: Optional[Span] = solid.spans[x + y * w]
             while s is not None:
                 bot: int = s.smax
                 top: int = s.next.smin if s.next is not None else MAX_HEIGHT

@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 
 
 class ColorWidget(QtWidgets.QWidget):
@@ -21,9 +21,16 @@ class ColorWidget(QtWidgets.QWidget):
         y = event.pos().y()
         if x > 0 and x < self.size().width() and y > 0 and y < self.size().height():
             color_dialog = QtWidgets.QColorDialog()
-            new_color = color_dialog.getColor(self._qt_color, options=QtWidgets.QColorDialog.ShowAlphaChannel)
+            new_color = color_dialog.getColor(
+                self._qt_color, options=QtWidgets.QColorDialog.ShowAlphaChannel
+            )
             if new_color.isValid():
-                self._color = (new_color.red(), new_color.green(), new_color.blue(), new_color.alpha())
+                self._color = (
+                    new_color.red(),
+                    new_color.green(),
+                    new_color.blue(),
+                    new_color.alpha(),
+                )
                 self._qt_color = QtGui.QColor(*self._color)
                 self._update(self._color)
                 self.repaint()
@@ -34,40 +41,75 @@ class SelectColorsWidget(QtWidgets.QWidget):
         super(SelectColorsWidget, self).__init__()
         self.m_set_colors = set_callback
         self._layout = QtWidgets.QFormLayout(self)
-        self._colors = {"background": (171, 168, 166, 255),
-                        "back_dark_lines": (151, 148, 146, 255),
-                        "back_light_lines": (161, 158, 156, 255),
-                        "poly_border": (0, 125, 0, 64),
-                        "poly_int": (102, 198, 102, 120),
-                        "obst" : (220, 16, 16, 120),
-                        "path": (247, 220, 112, 255),
-                        "agents": (65, 65, 128, 125)}
-        self._sizes = {"point_size": 3, "path_size": 2, "dark_grid_size": 80, "light_grid_size": 20}
+        self._colors = {
+            "background": (171, 168, 166, 255),
+            "back_dark_lines": (151, 148, 146, 255),
+            "back_light_lines": (161, 158, 156, 255),
+            "poly_border": (0, 125, 0, 64),
+            "poly_int": (102, 198, 102, 120),
+            "obst": (220, 16, 16, 120),
+            "path": (247, 220, 112, 255),
+            "agents": (65, 65, 128, 125),
+        }
+        self._sizes = {
+            "point_size": 3,
+            "path_size": 2,
+            "dark_grid_size": 80,
+            "light_grid_size": 20,
+        }
 
-        self._layout.addRow(QtWidgets.QLabel("Background"), ColorWidget(self._colors["background"], self.m_update_background))
-        self._layout.addRow(QtWidgets.QLabel("Background Dark Grid"), ColorWidget(self._colors["back_dark_lines"], self.m_update_back_dark_lines))
-        self._layout.addRow(QtWidgets.QLabel("Background Light Grid"), ColorWidget(self._colors["back_light_lines"], self.m_update_back_light_lines))
-        self._layout.addRow(QtWidgets.QLabel("Polygon Borders"), ColorWidget(self._colors["poly_border"], self.m_update_poly_border))
-        self._layout.addRow(QtWidgets.QLabel("Polygon Interior"), ColorWidget(self._colors["poly_int"], self.m_update_poly_int))
-        self._layout.addRow(QtWidgets.QLabel("Obstacle Line"), ColorWidget(self._colors["obst"], self.m_update_obst))
-        self._layout.addRow(QtWidgets.QLabel("Points and Path"), ColorWidget(self._colors["path"], self.m_update_path))
-        self._layout.addRow(QtWidgets.QLabel("Agents"), ColorWidget(self._colors["agents"], self.m_update_agents))
+        self._layout.addRow(
+            QtWidgets.QLabel("Background"),
+            ColorWidget(self._colors["background"], self.m_update_background),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Background Dark Grid"),
+            ColorWidget(self._colors["back_dark_lines"], self.m_update_back_dark_lines),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Background Light Grid"),
+            ColorWidget(
+                self._colors["back_light_lines"], self.m_update_back_light_lines
+            ),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Polygon Borders"),
+            ColorWidget(self._colors["poly_border"], self.m_update_poly_border),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Polygon Interior"),
+            ColorWidget(self._colors["poly_int"], self.m_update_poly_int),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Obstacle Line"),
+            ColorWidget(self._colors["obst"], self.m_update_obst),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Points and Path"),
+            ColorWidget(self._colors["path"], self.m_update_path),
+        )
+        self._layout.addRow(
+            QtWidgets.QLabel("Agents"),
+            ColorWidget(self._colors["agents"], self.m_update_agents),
+        )
 
         self.update_colors()
 
     def update_colors(self):
-        self.m_set_colors(background=self._colors["background"],
-                          back_dark_lines=self._colors["back_dark_lines"],
-                          back_light_lines=self._colors["back_light_lines"],
-                          poly_border=self._colors["poly_border"],
-                          poly_int=self._colors["poly_int"],
-                          obst=self._colors["obst"],
-                          path=self._colors["path"],
-                          agents=self._colors["agents"],
-                          point_size=self._sizes["point_size"],
-                          path_size=self._sizes["path_size"],
-                          dark_grid_size=self._sizes["dark_grid_size"],
-                          light_grid_size=self._sizes["light_grid_size"])
+        self.m_set_colors(
+            background=self._colors["background"],
+            back_dark_lines=self._colors["back_dark_lines"],
+            back_light_lines=self._colors["back_light_lines"],
+            poly_border=self._colors["poly_border"],
+            poly_int=self._colors["poly_int"],
+            obst=self._colors["obst"],
+            path=self._colors["path"],
+            agents=self._colors["agents"],
+            point_size=self._sizes["point_size"],
+            path_size=self._sizes["path_size"],
+            dark_grid_size=self._sizes["dark_grid_size"],
+            light_grid_size=self._sizes["light_grid_size"],
+        )
 
     def m_update_background(self, color):
         self._colors["background"] = color

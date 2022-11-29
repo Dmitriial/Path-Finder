@@ -1,10 +1,26 @@
-from typing import List, Tuple, Optional
-from pathfinder.navmesh_baker.rc_classes import CompactHeightfield, CompactCell, CompactSpan, LevelStackEntry, DirtyEntry, Region
-from pathfinder.navmesh_baker.rc_constants import RC_NULL_AREA, RC_NOT_CONNECTED, RC_BORDER_REG
-from pathfinder.navmesh_baker.rc_calcs import get_con, get_dir_offset_x, get_dir_offset_y
+from typing import List, Optional, Tuple
 
-def erode_walkable_area(radius: int,
-                        chf: CompactHeightfield) -> bool:
+from pathfinder.navmesh_baker.rc_calcs import (
+    get_con,
+    get_dir_offset_x,
+    get_dir_offset_y,
+)
+from pathfinder.navmesh_baker.rc_classes import (
+    CompactCell,
+    CompactHeightfield,
+    CompactSpan,
+    DirtyEntry,
+    LevelStackEntry,
+    Region,
+)
+from pathfinder.navmesh_baker.rc_constants import (
+    RC_BORDER_REG,
+    RC_NOT_CONNECTED,
+    RC_NULL_AREA,
+)
+
+
+def erode_walkable_area(radius: int, chf: CompactHeightfield) -> bool:
     w: int = chf.width
     h: int = chf.height
 
@@ -25,7 +41,7 @@ def erode_walkable_area(radius: int,
     aai: int = 0
     for y in range(h):
         for x in range(w):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     if chf.areas[i] == RC_NULL_AREA:
@@ -38,7 +54,7 @@ def erode_walkable_area(radius: int,
                                 if get_con(s, dir) != RC_NOT_CONNECTED:
                                     nx: int = x + get_dir_offset_x(dir)
                                     ny: int = y + get_dir_offset_y(dir)
-                                    c = chf.cells[nx + ny*w]
+                                    c = chf.cells[nx + ny * w]
                                     if c is not None:
                                         nidx: int = c.index + get_con(s, dir)
                                         if chf.areas[nidx] != RC_NULL_AREA:
@@ -52,16 +68,16 @@ def erode_walkable_area(radius: int,
     # Pass 1
     for y in range(h):
         for x in range(w):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
-                    s= chf.spans[i]
+                    s = chf.spans[i]
                     if s is not None:
                         if get_con(s, 0) != RC_NOT_CONNECTED:
                             # (-1, 0)
                             ax = x + get_dir_offset_x(0)
                             ay = y + get_dir_offset_y(0)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 0)
                                 asp = chf.spans[ai]
@@ -74,7 +90,7 @@ def erode_walkable_area(radius: int,
                                     if get_con(asp, 3) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(3)
                                         aay = ay + get_dir_offset_y(3)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 3)
                                             nd = min(dist[aai] + 3, 255)
@@ -84,7 +100,7 @@ def erode_walkable_area(radius: int,
                             # (0, -1)
                             ax = x + get_dir_offset_x(3)
                             ay = y + get_dir_offset_y(3)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 3)
                                 asp = chf.spans[ai]
@@ -97,7 +113,7 @@ def erode_walkable_area(radius: int,
                                     if get_con(asp, 2) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(2)
                                         aay = ay + get_dir_offset_y(2)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 2)
                                             nd = min(dist[aai] + 3, 255)
@@ -107,7 +123,7 @@ def erode_walkable_area(radius: int,
     # Phase 2
     for y in range(h - 1, -1, -1):
         for x in range(w - 1, -1, -1):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     s = chf.spans[i]
@@ -117,7 +133,7 @@ def erode_walkable_area(radius: int,
                             # (1, 0)
                             ax = x + get_dir_offset_x(2)
                             ay = y + get_dir_offset_y(2)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 2)
                                 asp = chf.spans[ai]
@@ -130,7 +146,7 @@ def erode_walkable_area(radius: int,
                                     if get_con(asp, 1) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(1)
                                         aay = ay + get_dir_offset_y(1)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 1)
                                             nd = min(dist[aai] + 3, 255)
@@ -140,7 +156,7 @@ def erode_walkable_area(radius: int,
                             # (0, 1)
                             ax = x + get_dir_offset_x(1)
                             ay = y + get_dir_offset_y(1)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 1)
                                 asp = chf.spans[ai]
@@ -152,7 +168,7 @@ def erode_walkable_area(radius: int,
                                     if get_con(asp, 0) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(0)
                                         aay = ay + get_dir_offset_y(0)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 0)
                                             nd = min(dist[aai] + 3, 255)
@@ -166,9 +182,10 @@ def erode_walkable_area(radius: int,
 
     return True
 
-def calculate_distance_field(chf: CompactHeightfield,
-                             src: List[int],
-                             max_dist: int) -> int:  # return new value of the max_dist
+
+def calculate_distance_field(
+    chf: CompactHeightfield, src: List[int], max_dist: int
+) -> int:  # return new value of the max_dist
     w: int = chf.width
     h: int = chf.height
 
@@ -190,7 +207,7 @@ def calculate_distance_field(chf: CompactHeightfield,
     aai: int = 0
     for y in range(h):
         for x in range(w):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     s = chf.spans[i]
@@ -202,7 +219,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                             if get_con(s, dir) != RC_NOT_CONNECTED:
                                 ax = x + get_dir_offset_x(dir)
                                 ay = y + get_dir_offset_y(dir)
-                                c2 = chf.cells[ax + ay*w]
+                                c2 = chf.cells[ax + ay * w]
                                 if c2 is not None:
                                     ai = c2.index + get_con(s, dir)
                                     if area == chf.areas[ai]:
@@ -213,7 +230,7 @@ def calculate_distance_field(chf: CompactHeightfield,
     # Phase 1
     for y in range(h):
         for x in range(w):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     s = chf.spans[i]
@@ -223,7 +240,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                             # (-1, 0)
                             ax = x + get_dir_offset_x(0)
                             ay = y + get_dir_offset_y(0)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 0)
                                 asp = chf.spans[ai]
@@ -235,7 +252,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                                     if get_con(asp, 3) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(3)
                                         aay = ay + get_dir_offset_y(3)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 3)
                                             if src[aai] + 3 < src[i]:
@@ -244,7 +261,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                             # (0, -1)
                             ax = x + get_dir_offset_x(3)
                             ay = y + get_dir_offset_y(3)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 3)
                                 asp = chf.spans[ai]
@@ -256,7 +273,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                                     if get_con(asp, 2) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(2)
                                         aay = ay + get_dir_offset_y(2)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 2)
                                             if src[aai] + 3 < src[i]:
@@ -265,7 +282,7 @@ def calculate_distance_field(chf: CompactHeightfield,
     # Pahse 2
     for y in range(h - 1, -1, -1):
         for x in range(w - 1, -1, -1):
-            c = chf.cells[x + y*w]
+            c = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     s = chf.spans[i]
@@ -275,7 +292,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                             # (1, 0)
                             ax = x + get_dir_offset_x(2)
                             ay = y + get_dir_offset_y(2)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 2)
                                 asp = chf.spans[ai]
@@ -287,7 +304,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                                     if get_con(asp, 1) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(1)
                                         aay = ay + get_dir_offset_y(1)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 1)
                                             if src[aai] + 3 < src[i]:
@@ -296,7 +313,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                             # (0, 1)
                             ax = x + get_dir_offset_x(1)
                             ay = y + get_dir_offset_y(1)
-                            c2 = chf.cells[ax + ay*w]
+                            c2 = chf.cells[ax + ay * w]
                             if c2 is not None:
                                 ai = c2.index + get_con(s, 1)
                                 asp = chf.spans[ai]
@@ -308,7 +325,7 @@ def calculate_distance_field(chf: CompactHeightfield,
                                     if get_con(asp, 0) != RC_NOT_CONNECTED:
                                         aax = ax + get_dir_offset_x(0)
                                         aay = ay + get_dir_offset_y(0)
-                                        c3 = chf.cells[aax + aay*w]
+                                        c3 = chf.cells[aax + aay * w]
                                         if c3 is not None:
                                             aai = c3.index + get_con(asp, 0)
                                             if src[aai] + 3 < src[i]:
@@ -319,10 +336,8 @@ def calculate_distance_field(chf: CompactHeightfield,
 
     return max_dist
 
-def box_blur(chf: CompactHeightfield,
-             thr: int,
-             src: List[int],
-             dst: List[int]):
+
+def box_blur(chf: CompactHeightfield, thr: int, src: List[int], dst: List[int]):
     w: int = chf.width
     h: int = chf.height
 
@@ -330,7 +345,7 @@ def box_blur(chf: CompactHeightfield,
 
     for y in range(h):
         for x in range(w):
-            c: Optional[CompactCell] = chf.cells[x + y*w]
+            c: Optional[CompactCell] = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     s: Optional[CompactSpan] = chf.spans[i]
@@ -345,7 +360,7 @@ def box_blur(chf: CompactHeightfield,
                             if get_con(s, dir) != RC_NOT_CONNECTED:
                                 ax: int = x + get_dir_offset_x(dir)
                                 ay: int = y + get_dir_offset_y(dir)
-                                c2: Optional[CompactCell] = chf.cells[ax + ay*w]
+                                c2: Optional[CompactCell] = chf.cells[ax + ay * w]
                                 if c2 is not None:
                                     ai: int = c2.index + get_con(s, dir)
                                     d += src[ai]
@@ -356,7 +371,9 @@ def box_blur(chf: CompactHeightfield,
                                         if get_con(asp, dir2) != RC_NOT_CONNECTED:
                                             ax2: int = ax + get_dir_offset_x(dir2)
                                             ay2: int = ay + get_dir_offset_y(dir2)
-                                            c3: Optional[CompactCell] = chf.cells[ax2 + ay2*w]
+                                            c3: Optional[CompactCell] = chf.cells[
+                                                ax2 + ay2 * w
+                                            ]
                                             if c3 is not None:
                                                 ai2: int = c3.index + get_con(asp, dir2)
                                                 d += src[ai2]
@@ -365,6 +382,7 @@ def box_blur(chf: CompactHeightfield,
                             else:
                                 d += cd * 2
                     dst[i] = (d + 5) // 9
+
 
 def build_distance_field(chf: CompactHeightfield) -> bool:
     src: List[int] = [0] * chf.span_count  # 2 bytes per element
@@ -379,30 +397,36 @@ def build_distance_field(chf: CompactHeightfield) -> bool:
 
     return True
 
-def paint_rect_region(minx: int,
-                      maxx: int,
-                      miny: int,
-                      maxy: int,
-                      reg_id: int,  # 2 bytes
-                      chf: CompactHeightfield,
-                      buf: List[int],  # 2 bytes per element
-                      src_reg: int):  # src_reg is a pointer to the buffer
+
+def paint_rect_region(
+    minx: int,
+    maxx: int,
+    miny: int,
+    maxy: int,
+    reg_id: int,  # 2 bytes
+    chf: CompactHeightfield,
+    buf: List[int],  # 2 bytes per element
+    src_reg: int,
+):  # src_reg is a pointer to the buffer
     w: int = chf.width
     for y in range(miny, maxy):
         for x in range(minx, maxx):
-            c: Optional[CompactCell] = chf.cells[x + y*w]
+            c: Optional[CompactCell] = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     if chf.areas[i] != RC_NULL_AREA:
                         buf[src_reg + i] = reg_id
 
-def sort_cells_by_level(start_level: int,
-                        chf: CompactHeightfield,
-                        buf: List[int],
-                        src_reg: int,
-                        nb_stacks: int,
-                        stacks: List[List[LevelStackEntry]],
-                        log_levels_per_stack: int):
+
+def sort_cells_by_level(
+    start_level: int,
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    nb_stacks: int,
+    stacks: List[List[LevelStackEntry]],
+    log_levels_per_stack: int,
+):
     w: int = chf.width
     h: int = chf.height
     start_level = start_level >> log_levels_per_stack
@@ -413,7 +437,7 @@ def sort_cells_by_level(start_level: int,
     # put all cells in the level range into the appropriate stacks
     for y in range(h):
         for x in range(w):
-            c: Optional[CompactCell] = chf.cells[x + y*w]
+            c: Optional[CompactCell] = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     if chf.areas[i] == RC_NULL_AREA or buf[src_reg + i] != 0:
@@ -428,24 +452,30 @@ def sort_cells_by_level(start_level: int,
 
                     stacks[s_id].append(LevelStackEntry(x, y, i))
 
-def append_stacks(src_stack: List[LevelStackEntry],
-                  dst_stack: List[LevelStackEntry],
-                  buf: List[int],
-                  src_reg: int):
+
+def append_stacks(
+    src_stack: List[LevelStackEntry],
+    dst_stack: List[LevelStackEntry],
+    buf: List[int],
+    src_reg: int,
+):
     for j in range(len(src_stack)):
         i: int = src_stack[j].index
         if i < 0 or buf[src_reg + i] != 0:
             continue
         dst_stack.append(src_stack[j])
 
-def expand_regions(max_iter: int,
-                   level: int,
-                   chf: CompactHeightfield,
-                   buf: List[int],
-                   src_reg: int,
-                   src_dist: int,
-                   stack: List[LevelStackEntry],
-                   fill_stack: bool):
+
+def expand_regions(
+    max_iter: int,
+    level: int,
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    src_dist: int,
+    stack: List[LevelStackEntry],
+    fill_stack: bool,
+):
     w: int = chf.width
     h: int = chf.height
 
@@ -458,10 +488,14 @@ def expand_regions(max_iter: int,
         stack.clear()
         for y in range(h):
             for x in range(w):
-                c = chf.cells[x + y*w]
+                c = chf.cells[x + y * w]
                 if c is not None:
                     for i in range(c.index, c.index + c.count):
-                        if chf.dist[i] >= level and buf[src_reg + i] == 0 and chf.areas[i] != RC_NULL_AREA:
+                        if (
+                            chf.dist[i] >= level
+                            and buf[src_reg + i] == 0
+                            and chf.areas[i] != RC_NULL_AREA
+                        ):
                             stack.append(LevelStackEntry(x, y, i))
     else:
         # use cells in the input stack
@@ -474,7 +508,7 @@ def expand_regions(max_iter: int,
     dirty_entries: List[DirtyEntry] = []
     iter: int = 0
     while len(stack) > 0:
-        failed: int  = 0
+        failed: int = 0
         dirty_entries.clear()
 
         for j in range(len(stack)):
@@ -486,7 +520,7 @@ def expand_regions(max_iter: int,
                 continue
 
             r: int = buf[src_reg + i]  # 2 bytes
-            d2: int = 0xffff  # 65535, 2 bytes
+            d2: int = 0xFFFF  # 65535, 2 bytes
             area: int = chf.areas[i]  # 1 byte
             s: Optional[CompactSpan] = chf.spans[i]
             if s is not None:
@@ -495,12 +529,14 @@ def expand_regions(max_iter: int,
                         continue
                     ax: int = x + get_dir_offset_x(dir)
                     ay: int = y + get_dir_offset_y(dir)
-                    c = chf.cells[ax + ay*w]
+                    c = chf.cells[ax + ay * w]
                     if c is not None:
                         ai: int = c.index + get_con(s, dir)
                         if chf.areas[ai] != area:
                             continue
-                        if (buf[src_reg + ai] > 0) and ((buf[src_reg + ai] & RC_BORDER_REG) == 0):
+                        if (buf[src_reg + ai] > 0) and (
+                            (buf[src_reg + ai] & RC_BORDER_REG) == 0
+                        ):
                             if buf[src_dist + ai] + 2 < d2:
                                 r = buf[src_reg + ai]
                                 d2 = buf[src_dist + ai] + 2
@@ -523,16 +559,19 @@ def expand_regions(max_iter: int,
             if iter >= max_iter:
                 break
 
-def flood_region(x: int,
-                 y: int,
-                 i: int,
-                 level: int,  # 2 bytes
-                 r: int,  # 2 bytes
-                 chf: CompactHeightfield,
-                 buf: List[int],
-                 src_reg: int,
-                 src_dist: int,
-                 stack: List[LevelStackEntry]) -> bool:
+
+def flood_region(
+    x: int,
+    y: int,
+    i: int,
+    level: int,  # 2 bytes
+    r: int,  # 2 bytes
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    src_dist: int,
+    stack: List[LevelStackEntry],
+) -> bool:
     w: int = chf.width
     area: int = chf.areas[i]  # 1 byte
 
@@ -567,7 +606,7 @@ def flood_region(x: int,
                 if get_con(cs, dir) != RC_NOT_CONNECTED:
                     ax = cx + get_dir_offset_x(dir)
                     ay = cy + get_dir_offset_y(dir)
-                    c1 = chf.cells[ax + ay*w]
+                    c1 = chf.cells[ax + ay * w]
                     if c1 is not None:
                         ai = c1.index + get_con(cs, dir)
                         if chf.areas[ai] != area:
@@ -586,7 +625,7 @@ def flood_region(x: int,
                             if get_con(asp, dir2) != RC_NOT_CONNECTED:
                                 ax2: int = ax + get_dir_offset_x(dir2)
                                 ay2: int = ay + get_dir_offset_y(dir2)
-                                c2 = chf.cells[ax2 + ay2*w]
+                                c2 = chf.cells[ax2 + ay2 * w]
                                 if c2 is not None:
                                     ai2: int = c2.index + get_con(asp, dir2)
                                     if chf.areas[ai2] != area:
@@ -606,7 +645,7 @@ def flood_region(x: int,
                 if get_con(cs, dir) != RC_NOT_CONNECTED:
                     ax = cx + get_dir_offset_x(dir)
                     ay = cy + get_dir_offset_y(dir)
-                    c1 = chf.cells[ax + ay*w]
+                    c1 = chf.cells[ax + ay * w]
                     if c1 is not None:
                         ai = c1.index + get_con(cs, dir)
                         if chf.areas[ai] != area:
@@ -618,26 +657,30 @@ def flood_region(x: int,
 
     return count > 0
 
-def add_unique_floor_region(reg: Region,
-                            n: int):
+
+def add_unique_floor_region(reg: Region, n: int):
     for i in range(len(reg.floors)):
         if reg.floors[i] == n:
             return
     reg.floors.append(n)
 
-def is_solid_edge(chf: CompactHeightfield,
-                  buf: List[int],
-                  src_reg: int,
-                  x: int,
-                  y: int,
-                  i: int, dir: int) -> bool:
+
+def is_solid_edge(
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    x: int,
+    y: int,
+    i: int,
+    dir: int,
+) -> bool:
     s: Optional[CompactSpan] = chf.spans[i]
     r: int = 0  # 2 bytes
     if s is not None:
         if get_con(s, dir) != RC_NOT_CONNECTED:
             ax: int = x + get_dir_offset_x(dir)
             ay: int = y + get_dir_offset_y(dir)
-            c: Optional[CompactCell] = chf.cells[ax + ay*chf.width]
+            c: Optional[CompactCell] = chf.cells[ax + ay * chf.width]
             if c is not None:
                 ai: int = c.index + get_con(s, dir)
                 r = buf[src_reg + ai]
@@ -645,14 +688,17 @@ def is_solid_edge(chf: CompactHeightfield,
         return False
     return True
 
-def walk_contour(x: int,
-                y: int,
-                i: int,
-                dir: int,
-                chf: CompactHeightfield,
-                buf: List[int],
-                src_reg: int,
-                cont: List[int]):
+
+def walk_contour(
+    x: int,
+    y: int,
+    i: int,
+    dir: int,
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    cont: List[int],
+):
     start_dir: int = dir
     starti: int = i
 
@@ -666,7 +712,7 @@ def walk_contour(x: int,
         if get_con(ss, dir) != RC_NOT_CONNECTED:
             ax = x + get_dir_offset_x(dir)
             ay = y + get_dir_offset_y(dir)
-            c = chf.cells[ax + ay*chf.width]
+            c = chf.cells[ax + ay * chf.width]
             if c is not None:
                 ai = c.index + get_con(ss, dir)
                 cur_reg = buf[src_reg + ai]
@@ -682,7 +728,7 @@ def walk_contour(x: int,
                 if get_con(s, dir) != RC_NOT_CONNECTED:
                     ax = x + get_dir_offset_x(dir)
                     ay = y + get_dir_offset_y(dir)
-                    c = chf.cells[ax + ay*chf.width]
+                    c = chf.cells[ax + ay * chf.width]
                     if c is not None:
                         ai = c.index + get_con(s, dir)
                         r = buf[src_reg + ai]
@@ -695,7 +741,7 @@ def walk_contour(x: int,
                 nx: int = x + get_dir_offset_x(dir)
                 ny: int = y + get_dir_offset_y(dir)
                 if get_con(s, dir) != RC_NOT_CONNECTED:
-                    nc: Optional[CompactCell] = chf.cells[nx + ny*chf.width]
+                    nc: Optional[CompactCell] = chf.cells[nx + ny * chf.width]
                     if nc is not None:
                         ni = nc.index + get_con(s, dir)
                 if ni == -1:
@@ -721,14 +767,15 @@ def walk_contour(x: int,
             else:
                 j += 1
 
+
 def is_region_connected_to_border(reg: Region) -> bool:
     for i in range(len(reg.connections)):
         if reg.connections[i] == 0:
             return True
     return False
 
-def can_merge_with_region(rega: Region, 
-                          regb: Region) -> bool:
+
+def can_merge_with_region(rega: Region, regb: Region) -> bool:
     if rega.area_type != regb.area_type:
         return False
     n: int = 0
@@ -742,10 +789,11 @@ def can_merge_with_region(rega: Region,
             return False
     return True
 
+
 def remove_adjacent_neighbours(reg: Region):
     i: int = 0
     while i < len(reg.connections) and len(reg.connections) > 1:
-        ni: int = (i+1) % len(reg.connections)
+        ni: int = (i + 1) % len(reg.connections)
         if reg.connections[i] == reg.connections[ni]:
             for j in range(1, len(reg.connections) - 1):
                 reg.connections[j] = reg.connections[j + 1]
@@ -753,8 +801,8 @@ def remove_adjacent_neighbours(reg: Region):
         else:
             i += 1
 
-def merge_regions(rega: Region,
-                  regb: Region) -> bool:
+
+def merge_regions(rega: Region, regb: Region) -> bool:
     aid: int = rega.id  # 2 bytes
     bid: int = regb.id  # 2 bytes
 
@@ -801,9 +849,8 @@ def merge_regions(rega: Region,
 
     return True
 
-def replace_neighbour(reg: Region,
-                      old_id: int,  # 2 bytes
-                      new_id: int):  # 2 bytes
+
+def replace_neighbour(reg: Region, old_id: int, new_id: int):  # 2 bytes  # 2 bytes
     nei_changed: bool = False
     for i in range(len(reg.connections)):
         if reg.connections[i] == old_id:
@@ -815,13 +862,16 @@ def replace_neighbour(reg: Region,
     if nei_changed:
         remove_adjacent_neighbours(reg)
 
-def merge_and_filter_regions(min_region_area: int,
-                             merge_region_size: int,
-                             max_region_id: int,  # 2 bytes, changed in the function, so, we should also return it
-                             chf: CompactHeightfield,
-                             buf: List[int],
-                             src_reg: int,
-                             overlaps: List[int]) -> Tuple[bool, int]:
+
+def merge_and_filter_regions(
+    min_region_area: int,
+    merge_region_size: int,
+    max_region_id: int,  # 2 bytes, changed in the function, so, we should also return it
+    chf: CompactHeightfield,
+    buf: List[int],
+    src_reg: int,
+    overlaps: List[int],
+) -> Tuple[bool, int]:
     w: int = chf.width
     h: int = chf.height
 
@@ -835,7 +885,7 @@ def merge_and_filter_regions(min_region_area: int,
     # Find edge of a region and find connections around the contour
     for y in range(h):
         for x in range(w):
-            c: Optional[CompactCell] = chf.cells[x + y*w]
+            c: Optional[CompactCell] = chf.cells[x + y * w]
             if c is not None:
                 for i in range(c.index, c.index + c.count):
                     r: int = buf[src_reg + i]  # 2 bytes
@@ -939,13 +989,15 @@ def merge_and_filter_regions(min_region_area: int,
                 continue
 
             # Check to see if the region should be merged
-            if reg2.span_count > merge_region_size and is_region_connected_to_border(reg2):
+            if reg2.span_count > merge_region_size and is_region_connected_to_border(
+                reg2
+            ):
                 continue
 
             # Small region with more than 1 connection
             # Or region which is not connected to a border at all
             # Find smallest neighbour region that connects to this one
-            smallest: int = 0xfffffff  # 268 435 455
+            smallest: int = 0xFFFFFFF  # 268 435 455
             merge_id: int = reg2.id  # 2 bytes
             for j in range(len(reg2.connections)):
                 if reg2.connections[j] & RC_BORDER_REG:
@@ -953,7 +1005,11 @@ def merge_and_filter_regions(min_region_area: int,
                 mreg: Region = regions[reg2.connections[j]]
                 if mreg.id == 0 or (mreg.id & RC_BORDER_REG) or mreg.overlap:
                     continue
-                if mreg.span_count < smallest and can_merge_with_region(reg2, mreg) and can_merge_with_region(mreg, reg2):
+                if (
+                    mreg.span_count < smallest
+                    and can_merge_with_region(reg2, mreg)
+                    and can_merge_with_region(mreg, reg2)
+                ):
                     smallest = mreg.span_count
                     merge_id = mreg.id
             # Found new id
@@ -1011,10 +1067,13 @@ def merge_and_filter_regions(min_region_area: int,
 
     return (True, max_region_id)
 
-def build_regions(chf: CompactHeightfield, 
-                  border_size: int, 
-                  min_region_area: int,
-                  merge_region_area: int) -> bool:
+
+def build_regions(
+    chf: CompactHeightfield,
+    border_size: int,
+    min_region_area: int,
+    merge_region_area: int,
+) -> bool:
     w: int = chf.width
     h: int = chf.height
 
@@ -1022,7 +1081,9 @@ def build_regions(chf: CompactHeightfield,
 
     LOG_NB_STACKS: int = 3
     NB_STACKS: int = 1 << LOG_NB_STACKS  # in fact = 8
-    lvl_stacks: List[List[LevelStackEntry]] = [[LevelStackEntry() for j in range(256)] for i in range(NB_STACKS)]
+    lvl_stacks: List[List[LevelStackEntry]] = [
+        [LevelStackEntry() for j in range(256)] for i in range(NB_STACKS)
+    ]
     stack: List[LevelStackEntry] = [LevelStackEntry() for i in range(256)]
 
     src_reg: int = 0  # first pointer to the buffer
@@ -1053,15 +1114,19 @@ def build_regions(chf: CompactHeightfield,
     s_id: int = -1
     while level > 0:
         level = level - 2 if level >= 2 else 0
-        s_id = (s_id+1) & (NB_STACKS-1)
+        s_id = (s_id + 1) & (NB_STACKS - 1)
 
         if s_id == 0:
             sort_cells_by_level(level, chf, buf, src_reg, NB_STACKS, lvl_stacks, 1)
         else:
-            append_stacks(lvl_stacks[s_id - 1], lvl_stacks[s_id], buf, src_reg)  # copy left overs from last level
+            append_stacks(
+                lvl_stacks[s_id - 1], lvl_stacks[s_id], buf, src_reg
+            )  # copy left overs from last level
 
         # Expand current regions until no empty connected cells found
-        expand_regions(expand_iters, level, chf, buf, src_reg, src_dist, lvl_stacks[s_id], False)
+        expand_regions(
+            expand_iters, level, chf, buf, src_reg, src_dist, lvl_stacks[s_id], False
+        )
         # Mark new regions with IDs
         for j in range(len(lvl_stacks[s_id])):
             current: LevelStackEntry = lvl_stacks[s_id][j]
@@ -1069,7 +1134,9 @@ def build_regions(chf: CompactHeightfield,
             y: int = current.y
             i = current.index
             if i >= 0 and buf[src_reg + i] == 0:
-                if flood_region(x, y, i, level, region_id, chf, buf, src_reg, src_dist, stack):
+                if flood_region(
+                    x, y, i, level, region_id, chf, buf, src_reg, src_dist, stack
+                ):
                     if region_id == 0xFFFF:  # 65535
                         print("[Navmesh Baker] build_regions: Region ID overflow")
                         return False
@@ -1080,14 +1147,20 @@ def build_regions(chf: CompactHeightfield,
 
     overlaps: List[int] = []
     chf.max_regions = region_id
-    mafr_result = merge_and_filter_regions(min_region_area, merge_region_area, chf.max_regions, chf, buf, src_reg, overlaps)
+    mafr_result = merge_and_filter_regions(
+        min_region_area, merge_region_area, chf.max_regions, chf, buf, src_reg, overlaps
+    )
     chf.max_regions = mafr_result[1]
     if not mafr_result[0]:
         return False
 
     # If overlapping regions were found during merging, split those regions
     if len(overlaps) > 0:
-        print("[Navmesh Baker] build_regions: " + str(len(overlaps)) + " overlapping regions")
+        print(
+            "[Navmesh Baker] build_regions: "
+            + str(len(overlaps))
+            + " overlapping regions"
+        )
 
     # Write the result out
     for i in range(chf.span_count):

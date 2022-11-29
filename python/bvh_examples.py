@@ -1,12 +1,12 @@
-from pathfinder.navmesh.navmesh_bvh import NavmeshBVH
-from pathfinder.navmesh.navmesh_node import NavmeshNode
 import random
 import time
 
+from pathfinder.navmesh.navmesh_bvh import NavmeshBVH
+from pathfinder.navmesh.navmesh_node import NavmeshNode
+
 
 def grid_benchmark():
-    '''Generate plane grid from suqare polygons and find index of the polygon for random points
-    '''
+    """Generate plane grid from suqare polygons and find index of the polygon for random points"""
     # generate vertices
     n = 200
     m = 200
@@ -27,7 +27,7 @@ def grid_benchmark():
     nodes = []
     index = 0
     for i in range(len(sizes)):
-        nodes.append(NavmeshNode(vertices, i, polygons[index:index + sizes[i]]))
+        nodes.append(NavmeshNode(vertices, i, polygons[index : index + sizes[i]]))
         index += sizes[i]
 
     # create bvh-tree
@@ -40,9 +40,14 @@ def grid_benchmark():
     samples_count = 10000
     for s in range(samples_count):
         # generate random point
-        point = (random.uniform(0.0, (n - 1) * grid_size), 0.0, random.uniform(0.0, (m - 1) * grid_size))
+        point = (
+            random.uniform(0.0, (n - 1) * grid_size),
+            0.0,
+            random.uniform(0.0, (m - 1) * grid_size),
+        )
         sample_node = tree.sample(point)
     print("make", samples_count, "samples:", time.time() - start_time, "seconds")
+
 
 if __name__ == "__main__":
     grid_benchmark()

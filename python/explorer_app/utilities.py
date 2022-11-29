@@ -1,8 +1,8 @@
-from typing import Tuple
 import math
+from typing import Tuple
 
 
-class PointTransformer():
+class PointTransformer:
     def __init__(self, min_corner, max_corner, shift, aspect, width, height):
         self._min_corner = min_corner  # this is tuple
         self._max_corner = max_corner  # this is tuple
@@ -11,20 +11,44 @@ class PointTransformer():
         self._width = width
         self._height = height
 
-        self._x_coeff = self._height * self._aspect if self._aspect <= self._width / self._height else self._width
-        self._y_coeff = self._height if self._aspect <= self._width / self._height else self._width / self._aspect
+        self._x_coeff = (
+            self._height * self._aspect
+            if self._aspect <= self._width / self._height
+            else self._width
+        )
+        self._y_coeff = (
+            self._height
+            if self._aspect <= self._width / self._height
+            else self._width / self._aspect
+        )
 
     def transform(self, point):
-        return ((point[0] - self._min_corner[0]) * self._x_coeff / (self._max_corner[0] - self._min_corner[0]) + self._shift[0],
-                (point[1] - self._min_corner[1]) * self._y_coeff / (self._max_corner[1] - self._min_corner[1]) + self._shift[1])
+        return (
+            (point[0] - self._min_corner[0])
+            * self._x_coeff
+            / (self._max_corner[0] - self._min_corner[0])
+            + self._shift[0],
+            (point[1] - self._min_corner[1])
+            * self._y_coeff
+            / (self._max_corner[1] - self._min_corner[1])
+            + self._shift[1],
+        )
 
     def transform_inverse(self, point):
-        return ((point[0] - self._shift[0]) * (self._max_corner[0] - self._min_corner[0]) / self._x_coeff + self._min_corner[0],
-                (point[1] - self._shift[1]) * (self._max_corner[1] - self._min_corner[1]) / self._y_coeff + self._min_corner[1])
+        return (
+            (point[0] - self._shift[0])
+            * (self._max_corner[0] - self._min_corner[0])
+            / self._x_coeff
+            + self._min_corner[0],
+            (point[1] - self._shift[1])
+            * (self._max_corner[1] - self._min_corner[1])
+            / self._y_coeff
+            + self._min_corner[1],
+        )
 
 
 def get_vector_length_squared(vector_2d: Tuple[float, float]):
-    return vector_2d[0]**2 + vector_2d[1]**2
+    return vector_2d[0] ** 2 + vector_2d[1] ** 2
 
 
 def get_vector_length(vector_2d: Tuple[float, float]):
@@ -51,7 +75,13 @@ def read_level_data(file_path):
             verts_count = len(vertices_raw) // 3
             vertices = []
             for i in range(verts_count):
-                vertices.append((vertices_raw[3*i], vertices_raw[3*i + 1], vertices_raw[3*i + 2]))
+                vertices.append(
+                    (
+                        vertices_raw[3 * i],
+                        vertices_raw[3 * i + 1],
+                        vertices_raw[3 * i + 2],
+                    )
+                )
 
             i = 0
             polygons = []
@@ -69,9 +99,9 @@ def read_level_data(file_path):
                 vertices_raw = []
                 triangles_raw = eval(lines[1])
                 for i in range(len(temp_vertices_raw) // 2):
-                    vertices_raw.append(temp_vertices_raw[2*i])
+                    vertices_raw.append(temp_vertices_raw[2 * i])
                     vertices_raw.append(0.0)
-                    vertices_raw.append(temp_vertices_raw[2*i + 1])
+                    vertices_raw.append(temp_vertices_raw[2 * i + 1])
             else:
                 # data write splitted by spaces
                 vertices_raw = [float(v) for v in lines[0].split(" ")]
@@ -79,10 +109,22 @@ def read_level_data(file_path):
             verts_count = len(vertices_raw) // 3
             vertices = []
             for i in range(verts_count):
-                vertices.append((vertices_raw[3*i], vertices_raw[3*i + 1], vertices_raw[3*i + 2]))
+                vertices.append(
+                    (
+                        vertices_raw[3 * i],
+                        vertices_raw[3 * i + 1],
+                        vertices_raw[3 * i + 2],
+                    )
+                )
 
             tris_count = len(triangles_raw) // 3
             polygons = []
             for i in range(tris_count):
-                polygons.append([triangles_raw[3*i], triangles_raw[3*i + 1], triangles_raw[3*i + 2]])
+                polygons.append(
+                    [
+                        triangles_raw[3 * i],
+                        triangles_raw[3 * i + 1],
+                        triangles_raw[3 * i + 2],
+                    ]
+                )
             return vertices, polygons

@@ -1,15 +1,36 @@
-from typing import List, Tuple, Optional
 import math
-from pathfinder.navmesh_baker.rc_classes import Span, Heightfield, CompactHeightfield, CompactCell, CompactSpan
-from pathfinder.navmesh_baker.rc_constants import RC_PI, RC_WALKABLE_AREA, RC_NULL_AREA, RC_NOT_CONNECTED
-from pathfinder.navmesh_baker.rc_calcs import calc_tri_normal, clamp, get_dir_offset_x, get_dir_offset_y, set_con
+from typing import List, Optional, Tuple
 
-def create_height_field(width: int,
-                        height: int,
-                        bmin: Tuple[float, float, float],
-                        bmax: Tuple[float, float, float],
-                        cs: float,
-                        ch: float) -> Heightfield:
+from pathfinder.navmesh_baker.rc_calcs import (
+    calc_tri_normal,
+    clamp,
+    get_dir_offset_x,
+    get_dir_offset_y,
+    set_con,
+)
+from pathfinder.navmesh_baker.rc_classes import (
+    CompactCell,
+    CompactHeightfield,
+    CompactSpan,
+    Heightfield,
+    Span,
+)
+from pathfinder.navmesh_baker.rc_constants import (
+    RC_NOT_CONNECTED,
+    RC_NULL_AREA,
+    RC_PI,
+    RC_WALKABLE_AREA,
+)
+
+
+def create_height_field(
+    width: int,
+    height: int,
+    bmin: Tuple[float, float, float],
+    bmax: Tuple[float, float, float],
+    cs: float,
+    ch: float,
+) -> Heightfield:
     hf = Heightfield()
     hf.width = width
     hf.height = height
@@ -21,25 +42,34 @@ def create_height_field(width: int,
 
     return hf
 
+
 # Only sets the area id's for the walkable triangles. Does not alter the area id's for unwalkable triangles
-def mark_walkable_triangles(walkable_slope_angle: float,
-                            verts,  # List of floats, but the size may change
-                            nv: int,
-                            tris,  # List of ints
-                            nt: int):
+def mark_walkable_triangles(
+    walkable_slope_angle: float,
+    verts,  # List of floats, but the size may change
+    nv: int,
+    tris,  # List of ints
+    nt: int,
+):
     areas = [0] * nt
 
-    walkable_thr = math.cos(RC_PI * walkable_slope_angle/180.0)
+    walkable_thr = math.cos(RC_PI * walkable_slope_angle / 180.0)
     norm = [0.0, 0.0, 0.0]  # buffer for normal vector
     for i in range(nt):
-        tri_0, tri_1, tri_2 = tris[3*i : 3*i+3]
-        calc_tri_normal(verts[3*tri_0 : 3*tri_0+3],  # may be this is not very good to create new lists for each vertex
-                        verts[3*tri_1 : 3*tri_1+3], 
-                        verts[3*tri_2 : 3*tri_2+3], norm)
+        tri_0, tri_1, tri_2 = tris[3 * i : 3 * i + 3]
+        calc_tri_normal(
+            verts[
+                3 * tri_0 : 3 * tri_0 + 3
+            ],  # may be this is not very good to create new lists for each vertex
+            verts[3 * tri_1 : 3 * tri_1 + 3],
+            verts[3 * tri_2 : 3 * tri_2 + 3],
+            norm,
+        )
         if norm[1] > walkable_thr:
             areas[i] = RC_WALKABLE_AREA
 
     return areas
+
 
 def get_heightfield_span_count(hf: Heightfield) -> int:
     w: int = hf.width
@@ -47,16 +77,17 @@ def get_heightfield_span_count(hf: Heightfield) -> int:
     span_count: int = 0
     for y in range(h):
         for x in range(w):
-            s: Optional[Span] = hf.spans[x + y*w]
+            s: Optional[Span] = hf.spans[x + y * w]
             while s is not None:
                 if s.area != RC_NULL_AREA:
                     span_count += 1
                 s = s.next
     return span_count
 
-def build_compact_heightfield(walkable_height: int,
-                              walkable_climb: int,
-                              hf: Heightfield) -> CompactHeightfield:
+
+def build_compact_heightfield(
+    walkable_height: int, walkable_climb: int, hf: Heightfield
+) -> CompactHeightfield:
     chf = CompactHeightfield()
     w: int = hf.width
     h: int = hf.height
@@ -82,9 +113,9 @@ def build_compact_heightfield(walkable_height: int,
     idx: int = 0
     for y in range(h):
         for x in range(w):
-            s: Optional[Span] = hf.spans[x + y*w]
+            s: Optional[Span] = hf.spans[x + y * w]
             c: CompactCell = CompactCell()
-            chf.cells[x + y*w] = c
+            chf.cells[x + y * w] = c
             # If there are no spans at this cell, just leave the data to index=0, count=0
             if s is None:
                 continue
@@ -110,7 +141,7 @@ def build_compact_heightfield(walkable_height: int,
     too_high_neighbour: int = 0
     for y in range(h):
         for x in range(w):
-            cc: Optional[CompactCell] = chf.cells[x + y*w]
+            cc: Optional[CompactCell] = chf.cells[x + y * w]
             if cc is not None:
                 for i in range(cc.index, cc.index + cc.count):
                     ss: Optional[CompactSpan] = chf.spans[i]
@@ -125,7 +156,7 @@ def build_compact_heightfield(walkable_height: int,
 
                             # Iterate over all neighbour spans and check if any of the is
                             # accessible from current cell
-                            nc: Optional[CompactCell] = chf.cells[nx + ny*w]
+                            nc: Optional[CompactCell] = chf.cells[nx + ny * w]
                             if nc is not None:
                                 for k in range(nc.index, nc.index + nc.count):
                                     ns: Optional[CompactSpan] = chf.spans[k]
@@ -135,15 +166,22 @@ def build_compact_heightfield(walkable_height: int,
 
                                         # Check that the gap between the spans is walkable
                                         # and that the climb height between the gaps is not too high
-                                        if tops - bots >= walkable_height and abs(ns.y - ss.y) <= walkable_climb:
+                                        if (
+                                            tops - bots >= walkable_height
+                                            and abs(ns.y - ss.y) <= walkable_climb
+                                        ):
                                             # Mark direction as walkable
                                             lidx: int = k - nc.index
                                             if lidx < 0 or lidx > MAX_LAYERS:
-                                                too_high_neighbour = max(too_high_neighbour, lidx)
+                                                too_high_neighbour = max(
+                                                    too_high_neighbour, lidx
+                                                )
                                                 continue
                                             set_con(ss, dir, lidx)
                                             break
     if too_high_neighbour > MAX_LAYERS:
-        print("[Navmesh Baker] build_compact_heightfield: Heightfield has too many layers")
+        print(
+            "[Navmesh Baker] build_compact_heightfield: Heightfield has too many layers"
+        )
 
     return chf

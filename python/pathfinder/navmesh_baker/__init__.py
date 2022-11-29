@@ -1,30 +1,49 @@
-from typing import List, Tuple
 import math
 import struct
+from typing import List, Tuple
+
+from pathfinder.navmesh_baker.rc_area import (
+    build_distance_field,
+    build_regions,
+    erode_walkable_area,
+)
 from pathfinder.navmesh_baker.rc_calcs import calc_grid_size
-from pathfinder.navmesh_baker.rc_rasterization import rasterize_triangles
-from pathfinder.navmesh_baker.rc_filtering import filter_low_hanging_walkable_obstacles, filter_ledge_spans, filter_walkable_low_height_spans
-from pathfinder.navmesh_baker.rc_area import erode_walkable_area, build_distance_field, build_regions
-from pathfinder.navmesh_baker.rc_contour import build_contours
 from pathfinder.navmesh_baker.rc_classes import ContourSet, PolyMesh
+from pathfinder.navmesh_baker.rc_contour import build_contours
+from pathfinder.navmesh_baker.rc_filtering import (
+    filter_ledge_spans,
+    filter_low_hanging_walkable_obstacles,
+    filter_walkable_low_height_spans,
+)
+from pathfinder.navmesh_baker.rc_heightfield import (
+    build_compact_heightfield,
+    create_height_field,
+    mark_walkable_triangles,
+)
 from pathfinder.navmesh_baker.rc_mesh import build_poly_mesh
-from pathfinder.navmesh_baker.rc_heightfield import create_height_field, mark_walkable_triangles, build_compact_heightfield
+from pathfinder.navmesh_baker.rc_rasterization import rasterize_triangles
+
 
 class NavmeshBaker:
     def __init__(self):
-        self._input_vertices: List[Tuple[float, float, float]] = []  # list of vertex coordinates v0 = (x, y, z), v1 = (x, y, z), ...
-        self._input_triangles: List[Tuple[int, int, int]] = []  # list of triange vertex indexes t0 = (i, j, k), t1 = (i, j, k), ...
+        self._input_vertices: List[
+            Tuple[float, float, float]
+        ] = []  # list of vertex coordinates v0 = (x, y, z), v1 = (x, y, z), ...
+        self._input_triangles: List[
+            Tuple[int, int, int]
+        ] = []  # list of triange vertex indexes t0 = (i, j, k), t1 = (i, j, k), ...
         self._output_vertices: List[Tuple[float, float, float]] = []
         self._output_polygons: List[List[int]] = []
         self._is_dirty = True
 
-    def add_geometry(self, vertices: List[Tuple[float, float, float]],
-                           polygons: List[List[int]]):
-        '''add geometry to the baker
+    def add_geometry(
+        self, vertices: List[Tuple[float, float, float]], polygons: List[List[int]]
+    ):
+        """add geometry to the baker
 
-            vertices - array of vertex positions, each position is 3-tuple
-            polygons - array of arrays. Each array define polygon as a sequence of vertex indices
-        '''
+        vertices - array of vertex positions, each position is 3-tuple
+        polygons - array of arrays. Each array define polygon as a sequence of vertex indices
+        """
         n: int = len(self._input_vertices)  # remember the size of the initial array
         # add new vertices to the list
         self._input_vertices.extend(vertices)
@@ -32,22 +51,27 @@ class NavmeshBaker:
         for polygon in polygons:
             # triangulate each polygon and add triangles
             for i in range(1, len(polygon) - 1):
-                self._input_triangles.append((polygon[0] + n, polygon[i] + n, polygon[i + 1] + n))
+                self._input_triangles.append(
+                    (polygon[0] + n, polygon[i] + n, polygon[i + 1] + n)
+                )
         self._is_dirty = True
 
-    def bake(self, cell_size: float = 0.3,
-                   cell_height: float = 0.2,
-                   agent_height: float = 2.0,
-                   agent_radius: float = 0.6,
-                   agent_max_climb: float = 0.9,
-                   agent_max_slope: float = 45.0,
-                   region_min_size: int = 8,
-                   region_merge_size: int = 20,
-                   edge_max_len: float = 12.0,
-                   edge_max_error: float = 1.3,
-                   verts_per_poly: int = 6,
-                   detail_sample_distance: float = 6.0,
-                   detail_sample_maximum_error: float = 1.0) -> bool:
+    def bake(
+        self,
+        cell_size: float = 0.3,
+        cell_height: float = 0.2,
+        agent_height: float = 2.0,
+        agent_radius: float = 0.6,
+        agent_max_climb: float = 0.9,
+        agent_max_slope: float = 45.0,
+        region_min_size: int = 8,
+        region_merge_size: int = 20,
+        edge_max_len: float = 12.0,
+        edge_max_error: float = 1.3,
+        verts_per_poly: int = 6,
+        detail_sample_distance: float = 6.0,
+        detail_sample_maximum_error: float = 1.0,
+    ) -> bool:
         nverts = len(self._input_vertices)
         ntris = len(self._input_triangles)
         # convert input vertices and triangles to plain lists
@@ -77,7 +101,7 @@ class NavmeshBaker:
                     bb_max[2] = z
             bmin = (bb_min[0], bb_min[1], bb_min[2])
             bmax = (bb_max[0], bb_max[1], bb_max[2])
-            
+
             # setup bake parameters
             cs = cell_size
             ch = cell_height
@@ -90,7 +114,9 @@ class NavmeshBaker:
             min_region_area = region_min_size**2
             merge_region_area = region_merge_size**2
             max_verts_per_poly = verts_per_poly
-            detail_sample_dist = 0.0 if detail_sample_distance < 0.9 else cs * detail_sample_distance
+            detail_sample_dist = (
+                0.0 if detail_sample_distance < 0.9 else cs * detail_sample_distance
+            )
             detail_sample_max_error = ch * detail_sample_maximum_error
 
             # Set the area where the navigation will be build
@@ -100,8 +126,12 @@ class NavmeshBaker:
             solid = create_height_field(width, height, bmin, bmax, cs, ch)
 
             # Find triangles which are walkable based on their slope and rasterize them
-            triareas = mark_walkable_triangles(walkable_slope_angle, verts, nverts, tris, ntris)
-            is_rasterize = rasterize_triangles(verts, tris, triareas, ntris, solid, walkable_climb)
+            triareas = mark_walkable_triangles(
+                walkable_slope_angle, verts, nverts, tris, ntris
+            )
+            is_rasterize = rasterize_triangles(
+                verts, tris, triareas, ntris, solid, walkable_climb
+            )
             if not is_rasterize:
                 print("[Navmesh Baker] bake: Could not rasterize triangles")
                 return False
@@ -131,7 +161,9 @@ class NavmeshBaker:
                 print("[Navmesh Baker] bake: Could not build distance field")
                 return False
 
-            is_build_regions: bool = build_regions(chf, 0, min_region_area, merge_region_area)
+            is_build_regions: bool = build_regions(
+                chf, 0, min_region_area, merge_region_area
+            )
             if not is_build_regions:
                 print("[Navmesh Baker] bake: Could not build watershed regions")
                 return False
@@ -139,7 +171,9 @@ class NavmeshBaker:
             # Step 5. Trace and simplify region contours
             # Create contours
             cset = ContourSet()
-            is_build_contours = build_contours(chf, max_simplification_error, max_edge_len, cset)
+            is_build_contours = build_contours(
+                chf, max_simplification_error, max_edge_len, cset
+            )
             if not is_build_contours:
                 print("[Navmesh Baker] bake: Could not create contours")
                 return False
@@ -153,14 +187,20 @@ class NavmeshBaker:
             # generate output mesh data
             # vertices
             for v_index in range(pmesh.nverts):
-                self._output_vertices.append((pmesh.bmin[0] + pmesh.cs * pmesh.verts[3*v_index], pmesh.bmin[1] + pmesh.ch * (pmesh.verts[3*v_index + 1] - 1), pmesh.bmin[2] + pmesh.cs * pmesh.verts[3*v_index + 2]))
+                self._output_vertices.append(
+                    (
+                        pmesh.bmin[0] + pmesh.cs * pmesh.verts[3 * v_index],
+                        pmesh.bmin[1] + pmesh.ch * (pmesh.verts[3 * v_index + 1] - 1),
+                        pmesh.bmin[2] + pmesh.cs * pmesh.verts[3 * v_index + 2],
+                    )
+                )
             # polygons
             polygon: List[int] = []
             for p_index in range(pmesh.npolys):
                 pv: int = p_index * 2 * pmesh.nvp
                 for j in range(pmesh.nvp):
                     vv = pmesh.polys[pv + j]
-                    if vv == 0xffff:
+                    if vv == 0xFFFF:
                         break
                     polygon.append(pmesh.polys[pv + j])
                 self._output_polygons.append(polygon)
@@ -173,22 +213,26 @@ class NavmeshBaker:
             print("[Navmesh Baker] bake: Input geometry is empty, stop baking process")
             return False
 
-    def get_polygonization(self) -> Tuple[List[Tuple[float, float, float]], List[List[int]]]:
-        '''return a tubple (vertices, polygons)
+    def get_polygonization(
+        self,
+    ) -> Tuple[List[Tuple[float, float, float]], List[List[int]]]:
+        """return a tubple (vertices, polygons)
 
         vertices is array of 3-tuples [(x1, y1, z1), (x2, y2, z2), ...]
         polygons is array of arrays [[p11, p12, ...], [p21, p22, ...], ...]
 
         if navmesh is not constructed, return emoty tuple
-        '''
+        """
         if self._is_dirty:
-            print("[Navmesh Baker] get_polygonization: Navigation mesh is not constructed. Call bake() at first")
+            print(
+                "[Navmesh Baker] get_polygonization: Navigation mesh is not constructed. Call bake() at first"
+            )
             return ([], [])
         else:
             return (self._output_vertices, self._output_polygons)
 
     def save_to_binary(self, file_path: str):
-        '''Save baked navmesh to the binary file
+        """Save baked navmesh to the binary file
 
         The structure of the file is very simple
         It starts from sequence of 32 bit floats, which corresponds to vertex positions
@@ -199,7 +243,7 @@ class NavmeshBaker:
         THe file ends by inifine 32 bits float
 
         Byte order is big-endian
-        '''
+        """
         if len(self._output_vertices) > 0 and len(self._output_polygons) > 0:
             vertices: List[float] = [x for t in self._output_vertices for x in t]
             polygons: List[int] = [x for t in self._output_polygons for x in t]
@@ -221,13 +265,13 @@ class NavmeshBaker:
             print("[Navmesh Baker] save_to_binary: Bake navigation mesh at first")
 
     def save_to_text(self, file_path: str):
-        '''Save baked navigation mesh into text file
+        """Save baked navigation mesh into text file
 
         The structure of the file is the following
         The first line is a plane sequance of floats with vertex coordinates, splitted by spaces
         The second line contains indexes of polygon vertices
         The last line contains sizes of polygons
-        '''
+        """
         if len(self._output_vertices) > 0 and len(self._output_polygons) > 0:
             vertices: List[str] = [str(x) for t in self._output_vertices for x in t]
             polygons: List[str] = [str(x) for t in self._output_polygons for x in t]
